@@ -1,0 +1,92 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <jenkins.model.BuildDiscarderProperty>
+      <strategy class="hudson.tasks.LogRotator">
+        <daysToKeep>14</daysToKeep>
+        <numToKeep>-1</numToKeep>
+        <artifactDaysToKeep>-1</artifactDaysToKeep>
+        <artifactNumToKeep>-1</artifactNumToKeep>
+      </strategy>
+    </jenkins.model.BuildDiscarderProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.25">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>jira_key</name>
+          <description>JIRA issue ID (Eg: CLD-11)</description>
+          <defaultValue></defaultValue>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>comment</name>
+          <description>Add some text</description>
+          <defaultValue></defaultValue>
+        </hudson.model.StringParameterDefinition>
+        <hudson.plugins.copyartifact.BuildSelectorParameter plugin="copyartifact@1.37">
+          <name>build_log</name>
+          <description>Copy build log</description>
+          <defaultSelector class="hudson.plugins.copyartifact.TriggeredBuildSelector">
+            <upstreamFilterStrategy>UseGlobalSetting</upstreamFilterStrategy>
+            <allowUpstreamDependencies>false</allowUpstreamDependencies>
+          </defaultSelector>
+        </hudson.plugins.copyartifact.BuildSelectorParameter>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+  </properties>
+  <scm class="hudson.scm.NullSCM"/>
+  <canRoam>true</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.plugins.copyartifact.CopyArtifact plugin="copyartifact@1.37">
+      <project>cron-jira-poller</project>
+      <filter>**</filter>
+      <target></target>
+      <excludes></excludes>
+      <selector class="hudson.plugins.copyartifact.ParameterizedBuildSelector">
+        <parameterName>build_log</parameterName>
+      </selector>
+      <doNotFingerprintArtifacts>false</doNotFingerprintArtifacts>
+    </hudson.plugins.copyartifact.CopyArtifact>
+    <jenkins.plugins.shiningpanda.builders.VirtualenvBuilder plugin="shiningpanda@0.22">
+      <pythonName>System-CPython-2.7</pythonName>
+      <home></home>
+      <clear>false</clear>
+      <systemSitePackages>false</systemSitePackages>
+      <nature>shell</nature>
+      <command>pip install jira==1.0.10 -q
+
+$JENKINS_HOME/jobs/scripts/jira/update_issue.py --issue $jira_key \
+                                                --comment &quot;$comment&quot; \
+                                                --log_path $WORKSPACE/qc-build.log
+</command>
+      <ignoreExitCode>false</ignoreExitCode>
+    </jenkins.plugins.shiningpanda.builders.VirtualenvBuilder>
+  </builders>
+  <publishers/>
+  <buildWrappers>
+    <hudson.plugins.ws__cleanup.PreBuildCleanup plugin="ws-cleanup@0.28">
+      <deleteDirs>false</deleteDirs>
+      <cleanupParameter></cleanupParameter>
+      <externalDelete></externalDelete>
+    </hudson.plugins.ws__cleanup.PreBuildCleanup>
+    <org.jenkinsci.plugins.credentialsbinding.impl.SecretBuildWrapper plugin="credentials-binding@1.6">
+      <bindings>
+        <org.jenkinsci.plugins.credentialsbinding.impl.UsernamePasswordMultiBinding>
+          <credentialsId>ecc71681-bef1-4686-82a3-3f379e9b17e7</credentialsId>
+          <usernameVariable>JIRA_USER</usernameVariable>
+          <passwordVariable>JIRA_PASS</passwordVariable>
+        </org.jenkinsci.plugins.credentialsbinding.impl.UsernamePasswordMultiBinding>
+      </bindings>
+    </org.jenkinsci.plugins.credentialsbinding.impl.SecretBuildWrapper>
+  </buildWrappers>
+</project>
